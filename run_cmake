@@ -1,0 +1,14 @@
+#!/bin/bash
+
+srcdir=${SRCDIR:-..}
+
+if [ ! -f ${srcdir}/backtest.cpp ] ; then
+  echo "Error, SRCDIR=${srcdir} doesn't contain backtest.cpp. Set SRCDIR to location of backtest source tree.";
+  echo "Recommendation: put 'run_cmake' in subdir of backtest and do config/build in subdir.";
+  exit 1;
+fi
+
+cmake \
+-DGTEST_ROOT="/mnt/c/Users/Alan/code/googletest/gtest_install" \
+${srcdir}
+
