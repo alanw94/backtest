@@ -2,6 +2,7 @@
 #define bt_Position_hpp
 
 #include <analyze_prices.hpp>
+#include <PositionStats.hpp>
 
 #include <iostream>
 
@@ -30,7 +31,8 @@ public:
     numProfitableSales(0), numTotalSales(0),
     currentDate(""), smaPreviousClose(0.0),
     isOpeningPrice(true),name(nm),
-    daysSinceSell(2)
+    daysSinceSell(2),
+    positionStats()
   {}
 
   virtual ~Position(){}
@@ -56,6 +58,9 @@ public:
   float get_sma_at_previous_close() const { return smaPreviousClose; }
   float get_previous_price() const { return previousPrice; }
 
+  const PositionStats& get_position_stats() const
+  { return positionStats; }
+
 private:
   virtual ShouldBuyResult should_buy(float price, bool isOpeningPrice) = 0;
 
@@ -77,6 +82,7 @@ private:
   bool isOpeningPrice = true;
   std::string name;
   unsigned daysSinceSell = 2;
+  PositionStats positionStats;
 };
 
 class MyPosition : public Position
@@ -144,9 +150,11 @@ private:
 class TSPPosition : public Position
 {
 public:
-  TSPPosition(float trailPercent)
+  TSPPosition(float trailPercentSell, float trailPercentBuy=-1.0)
   : Position("TSPSignal"),
-    trailingStopPercent(trailPercent), trailPrice(-1.0), movingPeak(-1.0)
+    trailingStopPercentSell(trailPercentSell),
+    trailingStopPercentBuy((trailPercentBuy<0.0 ? trailPercentSell : trailPercentBuy)),
+    trailPrice(-1.0), movingPeak(-1.0)
   {}
   virtual ~TSPPosition() {}
 
@@ -155,7 +163,8 @@ private:
 
   virtual ShouldSellResult should_sell(float price, bool isOpeningPrice);
 
-  float trailingStopPercent = 0.0;
+  float trailingStopPercentSell = 0.0;
+  float trailingStopPercentBuy = 0.0;
   float trailPrice = -1.0;
   float movingPeak = -1.0;
 };

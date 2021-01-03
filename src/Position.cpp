@@ -43,6 +43,7 @@ void Position::process_price(float price)
 
   isOpeningPrice = false;
   previousPrice = price;
+  positionStats.add_balance(get_balance());
 }
 
 void Position::buy(float price)
@@ -72,10 +73,24 @@ float Position::get_balance() const
   return balance;
 }
 
-ShouldBuyResult MyPosition::should_buy(float price, bool /*isOpeningPrice*/)
+ShouldBuyResult MyPosition::should_buy(float price, bool isOpeningPrice)
 {
-  bool priceIsAboveSma = (price > get_sma_at_previous_close());
+  bool priceIsAboveSma = isOpeningPrice
+       && (get_previous_price() > get_sma_at_previous_close())
+       && (price > get_sma_at_previous_close());
+  if (isOpeningPrice) {
+    openingPriceBelowSma = (price < get_sma_at_previous_close());
+  }
+  if (priceIsAboveSma) {
+    bt::out() << " MyPos::should_buy: prev-prc="<<get_previous_price()
+              <<", prevSma="<<get_sma_at_previous_close()
+              <<", price="<<price << std::endl;
+  }
+
   ShouldBuyResult shouldBuyResult{priceIsAboveSma, price};
+  if (shouldBuyResult.buy) {
+    movingPeak = price;
+  }
   return shouldBuyResult;
 }
 
@@ -87,6 +102,7 @@ ShouldSellResult MyPosition::should_sell(float price, bool isOpeningPrice)
 
   if (isOpeningPrice) {
     openingPriceBelowSma = (price < get_sma_at_previous_close());
+    bt::out() << "   at open, price="<<price<<", prevSma="<<get_sma_at_previous_close()<<std::endl;
   }
 
   float trailPercent = openingPriceBelowSma ?
@@ -94,7 +110,7 @@ ShouldSellResult MyPosition::should_sell(float price, bool isOpeningPrice)
 
   const bool priceBelowTrailPercent =
                 (percent_less(movingPeak, price) > trailPercent);
-  bt::out() << "    trailPercent "<<trailPercent<<"%"<<std::endl;
+  bt::out() << "    openedBelowSma="<<(openingPriceBelowSma?"true":"false")<<", trailPercent "<<trailPercent<<"%"<<std::endl;
 
   if (!priceBelowTrailPercent) {
     movingPeak = std::max(movingPeak, price);
@@ -154,9 +170,9 @@ ShouldBuyResult TSPPosition::should_buy(float price, bool isOpeningPrice)
   }
 
   const bool priceAboveTrailPercent =
-                (percent_less(price, trailPrice) >= trailingStopPercent);
+                (percent_less(price, trailPrice) >= trailingStopPercentBuy);
   bt::out() << "   TSPsb: price="<<price<<" trailPrice="<<trailPrice
-                << ", tsp="<<trailingStopPercent<<"%, priceAbove="
+                << ", tsp="<<trailingStopPercentBuy<<"%, priceAbove="
                 <<(priceAboveTrailPercent?"true":"false")<<std::endl;
 
   if (!priceAboveTrailPercent) {
@@ -168,7 +184,7 @@ ShouldBuyResult TSPPosition::should_buy(float price, bool isOpeningPrice)
   result.buy = priceAboveTrailPercent;
   if (result.buy) {
     result.buyPrice = isOpeningPrice ?
-                   price : trailPrice*((100.0+trailingStopPercent)/100);
+                   price : trailPrice*((100.0+trailingStopPercentBuy)/100);
     movingPeak = std::max(result.buyPrice, price);
   }
   return result;
@@ -185,9 +201,9 @@ ShouldSellResult TSPPosition::should_sell(float price, bool isOpeningPrice)
   }
 
   const bool priceBelowTrailPercent =
-                (percent_less(movingPeak, price) > trailingStopPercent);
+                (percent_less(movingPeak, price) > trailingStopPercentSell);
   bt::out() << "   TSPss: price="<<price<<" movingPeak="<<movingPeak
-                << ", tsp="<<trailingStopPercent<<"%, priceBelow="
+                << ", tsp="<<trailingStopPercentSell<<"%, priceBelow="
                 <<(priceBelowTrailPercent?"true":"false")<<std::endl;
   if (!priceBelowTrailPercent) {
     movingPeak = std::max(movingPeak, price);
@@ -197,7 +213,7 @@ ShouldSellResult TSPPosition::should_sell(float price, bool isOpeningPrice)
   result.sell = priceBelowTrailPercent;
   if (result.sell) {
     result.sellPrice = isOpeningPrice ?
-                   price : this->movingPeak*((100.0-trailingStopPercent)/100);
+                   price : this->movingPeak*((100.0-trailingStopPercentSell)/100);
     trailPrice = std::min(result.sellPrice, price);
   }
   return result;

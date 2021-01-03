@@ -46,7 +46,8 @@ std::string get_param(const std::string& argstr,
     ++pos;
   }
   std::string::size_type nextDelimiter = find_next_delimiter(argstr.substr(pos));
-  return argstr.substr(pos, nextDelimiter);
+  std::string result = argstr.substr(pos, nextDelimiter);
+  return result.empty() ? defaultValue : result;
 }
 
 float get_param(const std::string& argstr,

@@ -2,6 +2,19 @@
 
 #include <bt_utils.hpp>
 
+const float tol = 1.e-3;
+
+TEST(bt_utils, cagr1)
+{
+  float startingBalance = 10000.0;
+  float endingBalance = 19000.0;
+  float numYears = 3;
+
+  float expectedCagr = 23.856;
+  float cagr = bt::CAGR_percent(startingBalance, endingBalance, numYears);
+  EXPECT_NEAR(expectedCagr, cagr, tol);
+}
+
 TEST(bt_utils, get_path)
 {
   std::string filename("/path/TQQQ.csv");

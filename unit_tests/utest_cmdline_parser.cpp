@@ -7,12 +7,13 @@
 
 std::pair<char**,int> initialize_test_args()
 {
-  int argc = 4;
+  int argc = 5;
   char** argv = new char*[argc];
   argv[0] = new char[3]; sprintf(argv[0], "-i");
   argv[1] = new char[4]; sprintf(argv[1], "foo");
   argv[2] = new char[3]; sprintf(argv[2], "-f");
   argv[3] = new char[4]; sprintf(argv[3], "bar");
+  argv[4] = new char[3]; sprintf(argv[4], "-m");
 
   return std::make_pair(argv, argc);
 }
@@ -30,7 +31,7 @@ TEST(trade, cmdline_concatenate)
   std::pair<char**,int> args = initialize_test_args();
   std::string str = bt::concatenate(args.first, args.second);
 
-  std::string expected("-i foo -f bar");
+  std::string expected("-i foo -f bar -m");
   EXPECT_EQ(expected, str);
 
   destroy_args(args);
@@ -60,3 +61,14 @@ TEST(trade, cmdline_parseNotFound)
   destroy_args(args);
 }
 
+TEST(trade, cmdline_flagFoundButValueEmpty)
+{
+  std::pair<char**,int> args = initialize_test_args();
+  std::string str = bt::concatenate(args.first, args.second);
+
+  std::string param = bt::get_param(str, "-m", "bar");
+  std::string expected("bar");
+  EXPECT_EQ(expected, param);
+
+  destroy_args(args);
+}

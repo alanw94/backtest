@@ -5,6 +5,7 @@
 #include <string>
 #include <iostream>
 #include <cstdlib>
+#include <cmath>
 
 namespace bt {
 
@@ -26,6 +27,12 @@ struct DataSet {
   std::vector<float> closingPrices;
   bool empty() const { return dates.empty(); }
 };
+
+inline
+float CAGR_percent(float startBal, float endBal, int numYears)
+{
+  return (std::pow((endBal/startBal), (1.0/numYears)) -1.0) *100;
+}
 
 inline
 float percent_less(float baselinePrice, float newPrice)

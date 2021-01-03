@@ -99,7 +99,7 @@ TEST(position, trailingStopPercentage_buy_sell_buy)
 
   std::vector<float> prices = {100.0, 103.0, 98.0, 105.0};
 
-  //for these prices should be at 102 (100 + 2%)
+  //for these prices should buy at 102 (100 + 2%)
   //and then sell at 100.94 (103 - 2%).
   check_whether_invested(pos, prices, {false, true, false, false});
 

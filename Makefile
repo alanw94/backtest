@@ -39,6 +39,9 @@ read_stream.o : src/read_stream.cpp src/read_stream.hpp
 Position.o : src/Position.cpp src/Position.hpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c src/Position.cpp
 
+PositionStats.o : src/PositionStats.cpp src/PositionStats.hpp
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c src/PositionStats.cpp
+
 bt_utils.o : src/bt_utils.cpp src/bt_utils.hpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c src/bt_utils.cpp
 
@@ -60,10 +63,13 @@ utest_analyze_prices.o : unit_tests/utest_analyze_prices.cpp $(GTEST_HEADERS)
 utest_position.o : unit_tests/utest_position.cpp src/Position.hpp $(GTEST_HEADERS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c unit_tests/utest_position.cpp
 
+utest_position_stats.o : unit_tests/utest_position_stats.cpp src/PositionStats.hpp $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c unit_tests/utest_position_stats.cpp
+
 utest_bt_utils.o : src/bt_utils.hpp unit_tests/utest_bt_utils.cpp $(GTEST_HEADERS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c unit_tests/utest_bt_utils.cpp
 
-unittest.exe : utest_utils.o utest_read_stream.o utest_analyze_prices.o utest_position.o utest_bt_utils.o utest_cmdline_parser.o libbacktest.a
+unittest.exe : utest_utils.o utest_read_stream.o utest_analyze_prices.o utest_position.o utest_position_stats.o utest_bt_utils.o utest_cmdline_parser.o libbacktest.a
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(GTEST_DIR)/make/gtest_main.a $^ -lpthread -o $@
 
 backtest.exe : src/Position.hpp src/bt_utils.hpp backtest.cpp libbacktest.a
