@@ -10,59 +10,51 @@
 
 int main(int argc, char**argv)
 {
-  std::string args = bt::concatenate(argv, argc);
+  bt::ParsedOptions opts = bt::parse_command_line(argv, argc);
   std::string notSpecified("not specified");
-  std::string filename1 = bt::get_param(args, "-file1", notSpecified);
-  bt_require(notSpecified != filename1, "Failed to parse file name 1.");
+  bt_require(notSpecified != opts.fileName1, "Failed to parse file name 1.");
 
-  std::string equityName = bt::get_basename(filename1);
-  std::string filename2 = bt::get_param(args, "-file2", notSpecified);
-  std::cout << "filename1: " << filename1 << ", filename2: " << filename2 << std::endl;
-  const float defaultTrStopPct = 3.0;
-  const float trailingStopPercent = bt::get_param(args, "-tsp", defaultTrStopPct);
-  std::cout << "Using trailingStopPercent = "<<trailingStopPercent<<std::endl;
-  const unsigned defaultSma = 4;
-  const unsigned smaPeriods = bt::get_param(args, "-sma", defaultSma);
-  std::cout << "Using smaPeriods = "<<smaPeriods<<std::endl;
+  std::cout << "filename1: " << opts.fileName1 << ", filename2: " << opts.fileName2 << std::endl;
+  std::cout << "Using trailingStopPercent = "<<opts.trailingStopPercent<<std::endl;
+  std::cout << "Using smaPeriods = "<<opts.smaPeriods<<std::endl;
 
-  std::string insert = "tsp"+std::to_string(static_cast<unsigned>(trailingStopPercent))+"_sma"+std::to_string(smaPeriods);
-  std::string outputFileName = bt::get_output_filename(filename1,insert);
-  std::cout<<"Writing output to: '"<<outputFileName<<"'"<<std::endl;
-  std::ofstream outFile(outputFileName);
+  std::cout<<"Writing output to: '"<<opts.outputFileName<<"'"<<std::endl;
+  std::ofstream outFile(opts.outputFileName);
 
-  std::string logFileName = bt::get_log_filename(filename1, insert);
-  std::cout<<"Writing log to: '"<<logFileName<<"'"<<std::endl;
-  bt::out(logFileName) << equityName<<", "<<insert<<std::endl;
+  std::cout<<"Writing log to: '"<<opts.logFileName<<"'"<<std::endl;
+  bt::out(opts.logFileName) << opts.equityName
+    <<", tsp: "<<opts.trailingStopPercent
+    <<", sma: "<<opts.smaPeriods<<std::endl;
 
   bt::DataSet data1, data2;
-  if (!bt::read_data(filename1, data1)) {
+  if (!bt::read_data(opts.fileName1, data1)) {
     return -1;
   }
-  if (notSpecified != filename2) {
-    if (!bt::read_data(filename2, data2)) {
+  if (notSpecified != opts.fileName2) {
+    if (!bt::read_data(opts.fileName2, data2)) {
       return -1;
     }
   }
 
   bt::ComputedData computedData1, computedData2;
-  bt::compute_data(data1, smaPeriods, computedData1);
+  bt::compute_data(data1, opts.smaPeriods, computedData1);
   if (!data2.empty()) {
-    bt::compute_data(data2, smaPeriods, computedData2);
+    bt::compute_data(data2, opts.smaPeriods, computedData2);
   }
 
   computedData1.second_derivs.insert(computedData1.second_derivs.begin(), 0.0);
   if (!computedData2.empty()) {
     computedData2.second_derivs.insert(computedData2.second_derivs.begin(), 0.0);
   }
-  bt::align_with_sma(data1, computedData1.sma, smaPeriods);
+  bt::align_with_sma(data1, computedData1.sma, opts.smaPeriods);
   if (!data2.empty()) {
-    bt::align_with_sma(data2, computedData2.sma, smaPeriods);
+    bt::align_with_sma(data2, computedData2.sma, opts.smaPeriods);
   }
 
-  bt::MyPosition myPosition(trailingStopPercent);
-  bt::BuyAndHoldPosition bhPosition(equityName);
+  bt::MyPosition myPosition(opts.trailingStopPercent);
+  bt::BuyAndHoldPosition bhPosition(opts.equityName);
   bt::SMAPosition smaPosition;
-  bt::TSPPosition tspPosition(trailingStopPercent);
+  bt::TSPPosition tspPosition(opts.trailingStopPercent);
 
   std::vector<bt::Position*> positions =
     {&myPosition, &tspPosition, &smaPosition, &bhPosition};
@@ -71,7 +63,7 @@ int main(int argc, char**argv)
   for(const bt::Position* pos : positions) {
     outFile<<pos->get_name()<<",";
   }
-  outFile<<"SMA"+std::to_string(smaPeriods)<<std::endl;
+  outFile<<"SMA"+std::to_string(opts.smaPeriods)<<std::endl;
 
   float balance = 10000.0;
   const unsigned smaShares = static_cast<unsigned>(std::floor(balance/data1.closingPrices[1]));

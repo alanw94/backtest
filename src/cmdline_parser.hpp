@@ -16,6 +16,20 @@ float get_param(const std::string& argstr,
 unsigned get_param(const std::string& argstr,
                 const std::string& flag,
                 unsigned defaultValue);
+
+struct ParsedOptions
+{
+  std::string fileName1;
+  std::string fileName2;
+  std::string equityName;
+  std::string outputFileName;
+  std::string logFileName;
+  float trailingStopPercent = 3.0;
+  unsigned smaPeriods = 4;
+};
+
+ParsedOptions parse_command_line(char** argv, int argc);
+
 }// namespace bt
 
 #endif
