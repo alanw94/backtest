@@ -25,23 +25,23 @@ float force_into_range(float price, float lowLimit, float highLimit)
 void Position::process_price(float price)
 {
   if (!is_invested() && (daysSinceSell >= 2)) {
-    ShouldBuyResult result = should_buy(price, isOpeningPrice);
+    ShouldBuyResult result = should_buy(price, m_isOpeningPrice);
     if (result.buy) {
-      result.buyPrice = isOpeningPrice ? price :
+      result.buyPrice = m_isOpeningPrice ? price :
                force_into_range(result.buyPrice, price, previousPrice);
       buy(result.buyPrice);
     }
   }
   else if (is_invested()) {
-    ShouldSellResult result = should_sell(price, isOpeningPrice);
+    ShouldSellResult result = should_sell(price, m_isOpeningPrice);
     if (result.sell) {
-      result.sellPrice = isOpeningPrice ? price :
+      result.sellPrice = m_isOpeningPrice ? price :
                force_into_range(result.sellPrice, price, previousPrice);
       sell(result.sellPrice);
     }
   }
 
-  isOpeningPrice = false;
+  m_isOpeningPrice = false;
   previousPrice = price;
   positionStats.add_balance(get_balance());
 }

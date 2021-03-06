@@ -30,7 +30,7 @@ public:
     numShares(numShrs), previousPrice(0.0),
     numProfitableSales(0), numTotalSales(0),
     currentDate(""), smaPreviousClose(0.0),
-    isOpeningPrice(true),name(nm),
+    m_isOpeningPrice(true),name(nm),
     daysSinceSell(2),
     positionStats()
   {}
@@ -42,7 +42,7 @@ public:
   {
     currentDate = date;
     smaPreviousClose = smaAtPreviousClose;
-    isOpeningPrice = true;
+    m_isOpeningPrice = true;
     if (!is_invested()) {
       ++daysSinceSell;
     }
@@ -79,7 +79,7 @@ private:
 
   std::string currentDate;
   float smaPreviousClose = 0.0;
-  bool isOpeningPrice = true;
+  bool m_isOpeningPrice = true;
   std::string name;
   unsigned daysSinceSell = 2;
   PositionStats positionStats;

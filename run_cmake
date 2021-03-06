@@ -9,6 +9,9 @@ if [ ! -f ${srcdir}/backtest.cpp ] ; then
 fi
 
 cmake \
+-DCMAKE_CXX_STANDARD="14" \
+-DCMAKE_CXX_EXTENSIONS="OFF" \
+-DCMAKE_CXX_FLAGS="-Wall -Wextra -Wpedantic -Wshadow -Wuninitialized -Werror" \
 -DGTEST_ROOT="/mnt/c/Users/Alan/code/googletest/gtest_install" \
 ${srcdir}
 
