@@ -1,5 +1,6 @@
 #include "analyze_prices.hpp"
 #include "bt_utils.hpp"
+#include "bt_require.hpp"
 
 #include <iostream>
 #include <cmath>
@@ -28,35 +29,85 @@ float sum(const std::vector<float>& prices, unsigned start, unsigned numVals)
   return result;
 }
 
+class SmaComputer {
+public:
+  SmaComputer(unsigned numPeriods)
+  : m_data(numPeriods, 0.0),
+    m_curIdx(0),
+    m_startingUp(true)
+  {}
+
+  void add_value(float val)
+  {
+    m_data[m_curIdx++] = val;
+    if (m_curIdx >= m_data.size()) {
+      m_curIdx = 0;
+      if (m_startingUp) {
+        m_startingUp = false;
+      }
+    }
+  }
+
+  float get_average() const
+  {
+    unsigned num = m_startingUp ? m_curIdx : m_data.size();
+    return num > 0 ? sum(m_data, 0, num)/num : 0.0;
+  }
+
+private:
+  std::vector<float> m_data;
+  unsigned m_curIdx;
+  bool m_startingUp;
+};
+
 std::vector<float> compute_sma(const std::vector<float>& prices, unsigned numPeriods)
 {
   std::vector<float> sma;
-  if (prices.size() < numPeriods) {
-    return sma;
-  }
+  SmaComputer smaComputer(numPeriods);
 
-  sma.reserve(prices.size() - (numPeriods - 1));
+  sma.reserve(prices.size());
 
-  for(unsigned i=numPeriods-1; i<prices.size(); ++i) {
-    sma.push_back(sum(prices, i-(numPeriods-1), numPeriods)/numPeriods);
+  for(float price : prices) {
+    smaComputer.add_value(price);
+    sma.push_back(smaComputer.get_average());
   }
   return sma;
 }
 
-std::vector<float> compute_first_derivative(const std::vector<float>& vals)
+float deriv1(const std::vector<float>& vals, unsigned i, unsigned dx)
 {
-  std::vector<float> derivs(vals.size() - 1);
-  for(unsigned i=1; i<vals.size(); ++i) {
-    derivs[i-1] = vals[i] - vals[i-1];
+  bt_require(i<vals.size(), "deriv1: i out of range ("<<i<<", vals.size()="<<vals.size()<<")");
+  unsigned denom = std::min(i, dx);
+  float numer = vals[i]-vals[i-denom];
+  return denom==0 ? 0 : numer/denom;
+}
+
+std::vector<float> compute_first_derivative(const std::vector<float>& vals,
+                                            unsigned widthDx)
+{
+  std::vector<float> derivs(vals.size());
+  for(unsigned i=0; i<vals.size(); ++i) {
+    derivs[i] = deriv1(vals, i, widthDx);
   }
   return derivs;
 }
 
-std::vector<float> compute_second_derivative(const std::vector<float>& vals)
+std::vector<float> compute_second_derivative(const std::vector<float>& vals,
+                                             unsigned widthDx)
 {
-  std::vector<float> derivs(vals.size() - 2);
-  for(unsigned i=2; i<vals.size(); ++i) {
-    derivs[i-2] = (vals[i] - vals[i-1]) - (vals[i-1] - vals[i-2]);
+  std::vector<float> derivs(vals.size());
+  unsigned halfDx = widthDx/2;
+  const unsigned len = vals.size();
+  for(unsigned i=0; i<len; ++i) {
+    unsigned x2minusx1 = std::min(i, halfDx);
+    unsigned x3minusx2 = std::min(halfDx, len - i - 1);
+    if (x2minusx1 == 0 || x3minusx2 == 0) {
+      derivs[i] = 0.0; continue;
+    }
+    float d1 = deriv1(vals, i, x2minusx1);
+    unsigned i2 = std::min(i+halfDx, len-1);
+    float d2 = deriv1(vals, i2, x3minusx2);
+    derivs[i] = (d2-d1)/(x3minusx2+x2minusx1);
   }
   return derivs;
 }

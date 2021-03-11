@@ -96,16 +96,4 @@ std::ostream& out(const std::string& filename)
   return ofstr;
 }
 
-void align_with_sma(DataSet& data,
-                    const std::vector<float>& sma,
-                    unsigned numSMAPeriods)
-{
-  align_prices_with_sma(numSMAPeriods, sma, data.dates);
-  align_prices_with_sma(numSMAPeriods, sma, data.openingPrices);
-  align_prices_with_sma(numSMAPeriods, sma, data.highPrices);
-  align_prices_with_sma(numSMAPeriods, sma, data.lowPrices);
-  align_prices_with_sma(numSMAPeriods, sma, data.closingPrices);
-}
-
 } // namespace bt
-

@@ -30,16 +30,18 @@ PriceSummary get_price_summary(const std::vector<float>& prices);
 
 std::vector<float> compute_sma(const std::vector<float>& prices, unsigned numPeriods);
 
-std::vector<float> compute_first_derivative(const std::vector<float>& vals);
-std::vector<float> compute_second_derivative(const std::vector<float>& vals);
+std::vector<float> compute_first_derivative(const std::vector<float>& vals,
+                                            unsigned widthDx);
+std::vector<float> compute_second_derivative(const std::vector<float>& vals,
+                                             unsigned widthDx);
 
 inline
 void compute_data(const bt::DataSet& dataSet, unsigned smaPeriods,
                   ComputedData& computed)
 {
     computed.sma = bt::compute_sma(dataSet.closingPrices, smaPeriods);
-    computed.first_derivs = bt::compute_first_derivative(computed.sma);
-    computed.second_derivs = bt::compute_second_derivative(computed.sma);
+    computed.first_derivs = bt::compute_first_derivative(computed.sma, smaPeriods);
+    computed.second_derivs = bt::compute_second_derivative(computed.sma, smaPeriods);
 }
 
 struct StrIntLess {

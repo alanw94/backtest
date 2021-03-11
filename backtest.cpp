@@ -12,43 +12,24 @@ int main(int argc, char**argv)
 {
   bt::ParsedOptions opts = bt::parse_command_line(argv, argc);
   std::string notSpecified("not specified");
-  bt_require(notSpecified != opts.fileName1, "Failed to parse file name 1.");
 
-  std::cout << "filename1: " << opts.fileName1 << ", filename2: " << opts.fileName2 << std::endl;
-  std::cout << "Using trailingStopPercent = "<<opts.trailingStopPercent<<std::endl;
-  std::cout << "Using smaPeriods = "<<opts.smaPeriods<<std::endl;
-
-  std::cout<<"Writing output to: '"<<opts.outputFileName<<"'"<<std::endl;
+  std::cout << opts << std::endl;
   std::ofstream outFile(opts.outputFileName);
 
-  std::cout<<"Writing log to: '"<<opts.logFileName<<"'"<<std::endl;
   bt::out(opts.logFileName) << opts.equityName
     <<", tsp: "<<opts.trailingStopPercent
     <<", sma: "<<opts.smaPeriods<<std::endl;
 
   bt::DataSet data1, data2;
-  if (!bt::read_data(opts.fileName1, data1)) {
-    return -1;
-  }
+  bt_require(bt::read_data(opts.fileName1, data1), "Failed to read data from "<<opts.fileName1);
   if (notSpecified != opts.fileName2) {
-    if (!bt::read_data(opts.fileName2, data2)) {
-      return -1;
-    }
+    bt_require(bt::read_data(opts.fileName2, data2), "Failed to read data from "<<opts.fileName2);
   }
 
   bt::ComputedData computedData1, computedData2;
   bt::compute_data(data1, opts.smaPeriods, computedData1);
   if (!data2.empty()) {
     bt::compute_data(data2, opts.smaPeriods, computedData2);
-  }
-
-  computedData1.second_derivs.insert(computedData1.second_derivs.begin(), 0.0);
-  if (!computedData2.empty()) {
-    computedData2.second_derivs.insert(computedData2.second_derivs.begin(), 0.0);
-  }
-  bt::align_with_sma(data1, computedData1.sma, opts.smaPeriods);
-  if (!data2.empty()) {
-    bt::align_with_sma(data2, computedData2.sma, opts.smaPeriods);
   }
 
   bt::MyPosition myPosition(opts.trailingStopPercent);
@@ -90,14 +71,14 @@ int main(int argc, char**argv)
                                       data1.closingPrices[i]);
 
     for(float price : prices) {
-      for(bt::Position* pos : positions) {
-        pos->process_price(price);
+      for(bt::Position* position : positions) {
+        position->process_price(price);
       }
     }
 
     outFile<<data1.dates[i]<<",";
-    for(const bt::Position* pos : positions) {
-      outFile<<pos->get_balance()<<",";
+    for(const bt::Position* position : positions) {
+      outFile<<position->get_balance()<<",";
     }
 
     const float smaBalance = smaCash + smaShares*computedData1.sma[i];
@@ -116,13 +97,6 @@ int main(int argc, char**argv)
              <<"%"
              <<std::endl;
   }
-
-//    bt::Histogram hist = bt::compute_percentage_histogram(data1.openingPrices, data1.closingPrices);
-//    for(auto h : hist) {
-//      std::cout << h.first << "%: " << h.second.numDays
-//              << ", then up "<<h.second.followedByUp
-//              << ", dn "<<h.second.followedByDown << std::endl;
-//    }
 
   return 0;
 }

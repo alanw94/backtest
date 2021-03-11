@@ -6,10 +6,11 @@
 #include <iostream>
 #include <cstdlib>
 #include <cmath>
+#include <cstdint>
 
 namespace bt {
 
-enum ColumnIndex {
+enum ColumnIndex : uint8_t {
   Date = 0,
   OpeningPrice,
   HighPrice,
@@ -31,13 +32,13 @@ struct DataSet {
 inline
 float CAGR_percent(float startBal, float endBal, int numYears)
 {
-  return (std::pow((endBal/startBal), (1.0/numYears)) -1.0) *100;
+  return numYears > 0 ? (std::pow((endBal/startBal), (1.0/numYears)) -1.0) *100 : 0.0;
 }
 
 inline
 float percent_less(float baselinePrice, float newPrice)
 {
-    return (100.0*((baselinePrice - newPrice)/baselinePrice));
+    return baselinePrice > 0.0 ? (100.0*((baselinePrice - newPrice)/baselinePrice)) : 0.0;
 }
 
 std::vector<float>
@@ -57,26 +58,6 @@ std::string get_log_filename(const std::string& filename,
                              const std::string& insert);
 
 std::ostream& out(const std::string& filename="");
-
-template<typename T>
-void erase_front(std::vector<T>& vec, unsigned numToErase)
-{
-  vec.erase(vec.begin(), vec.begin()+numToErase);
-}
-
-template<typename VecType>
-void align_prices_with_sma(unsigned numSMAPeriods, const std::vector<float>& sma, VecType& prices)
-{
-  erase_front(prices, numSMAPeriods-1);
-  if (prices.size() != sma.size()) {
-    std::cerr<<"!!! ERROR, prices and sma arrays not sized consistently."<<std::endl;
-    std::abort();
-  }
-}
-
-void align_with_sma(DataSet& data,
-                    const std::vector<float>& sma,
-                    unsigned numSMAPeriods);
 
 } // namespace bt
 

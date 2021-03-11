@@ -22,40 +22,27 @@ TEST(trade, get_low_high)
   EXPECT_NEAR(40.759998, priceSummary.high, tol);
 }
 
-TEST(trade, compute_simple_moving_average)
+TEST(analyze_prices, compute_simple_moving_average)
 {
-  std::vector<float> prices = {1.0, 3.0, 4.0, 2.0, 1.0, 3.0 };
-  unsigned numSMAPeriods = 4;
+  std::vector<float> prices = {1.0, 3.0, 4.0, 2.0, 1.0, 3.0};
+  const unsigned numSMAPeriods = 4;
+  std::vector<float> expectedSma4
+                            = {1.0, 2.0, 2.6667, 2.5, 2.5, 2.5};
   std::vector<float> sma4 = bt::compute_sma(prices, numSMAPeriods);
 
-  unsigned expectedSize = prices.size() - (numSMAPeriods-1);
-  EXPECT_EQ(expectedSize, sma4.size());
-  float expectedSmaVal = 2.5;
-  for(float smaVal : sma4) {
-    EXPECT_NEAR(expectedSmaVal, smaVal, tol);
+  ASSERT_EQ(expectedSma4.size(), sma4.size());
+  for(unsigned i=0; i<expectedSma4.size(); ++i) {
+    EXPECT_NEAR(expectedSma4[i], sma4[i], tol);
   }
 }
 
-TEST(trade, compute_sma_and_align_arrays)
+TEST(analyze_prices, compute_1st_derivative)
 {
-  std::vector<float> prices = {1.0, 3.0, 4.0, 2.0, 1.0, 3.0 };
-  unsigned numSMAPeriods = 4;
-  std::vector<float> sma4 = bt::compute_sma(prices, numSMAPeriods);
-
-  unsigned oldPricesLength = prices.size();
-  bt::align_prices_with_sma(numSMAPeriods, sma4, prices);
-
-  unsigned expectedPricesLength = oldPricesLength - (numSMAPeriods-1);
-  EXPECT_EQ(expectedPricesLength, prices.size());
-  EXPECT_EQ(sma4.size(), prices.size());
-}
-
-
-TEST(trade, compute_derivative1)
-{
-  std::vector<float> vals = {1.0, 3.0, 3.0, 2.0};
-  std::vector<float> derivs = bt::compute_first_derivative(vals);
-  std::vector<float> expectedDerivs = {2.0, 0.0, -1.0};
+  std::vector<float> vals = {1.0, 3.0, 5.0, 2.0, 6.0};
+  unsigned dxWidth = 2;
+  std::vector<float> derivs = bt::compute_first_derivative(vals, dxWidth);
+  std::vector<float> expectedDerivs
+                          = {0.0, 2.0, 2.0, -0.5, 0.5};
 
   EXPECT_EQ(expectedDerivs.size(), derivs.size());
 
@@ -64,11 +51,13 @@ TEST(trade, compute_derivative1)
   }
 }
 
-TEST(trade, compute_derivative2)
+TEST(trade, compute_2nd_derivative)
 {
   std::vector<float> vals = {1.0, 3.0, 3.0, 2.0};
-  std::vector<float> derivs = bt::compute_second_derivative(vals);
-  std::vector<float> expectedDerivs = {-2.0, -1.0};
+  unsigned widthDx = 2;
+  std::vector<float> derivs = bt::compute_second_derivative(vals,widthDx);
+  std::vector<float> expectedDerivs
+                          = {0.0, -1.0, -0.5, 0.0};
 
   EXPECT_EQ(expectedDerivs.size(), derivs.size());
 
@@ -76,4 +65,3 @@ TEST(trade, compute_derivative2)
     EXPECT_NEAR(expectedDerivs[i], derivs[i], tol);
   }
 }
-

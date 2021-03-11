@@ -1,5 +1,6 @@
 #include "cmdline_parser.hpp"
 #include "bt_utils.hpp"
+#include "bt_require.hpp"
 #include <iostream>
 #include <sstream>
 
@@ -51,36 +52,6 @@ std::string get_param(const std::string& argstr,
   return result.empty() ? defaultValue : result;
 }
 
-float get_param(const std::string& argstr,
-                const std::string& flag,
-                float defaultValue)
-{
-  std::string paramStr = get_param(argstr, flag, flag);
-  if (paramStr == flag) {
-    return defaultValue;
-  }
-  std::stringstream ss;
-  ss<<paramStr;
-  float result;
-  ss>>result;
-  return result;
-}
-
-unsigned get_param(const std::string& argstr,
-                const std::string& flag,
-                unsigned defaultValue)
-{
-  std::string paramStr = get_param(argstr, flag, flag);
-  if (paramStr == flag) {
-    return defaultValue;
-  }
-  std::stringstream ss;
-  ss<<paramStr;
-  unsigned result;
-  ss>>result;
-  return result;
-}
-
 ParsedOptions parse_command_line(char** argv, int argc)
 {
   std::string args = concatenate(argv, argc);
@@ -90,14 +61,24 @@ ParsedOptions parse_command_line(char** argv, int argc)
   options.trailingStopPercent = get_param(args, "-tsp", options.trailingStopPercent);
   options.smaPeriods = get_param(args, "-sma", options.smaPeriods);
 
-  if (!options.fileName1.empty() && options.fileName1 != "not specified") {
-    options.equityName = get_basename(options.fileName1);
-    std::string insert = "tsp"+std::to_string(static_cast<unsigned>(options.trailingStopPercent))
-                       +"_sma"+std::to_string(options.smaPeriods);
-    options.outputFileName = get_output_filename(options.fileName1,insert);
-    options.logFileName = get_log_filename(options.fileName1,insert);
-  }
+  bt_require(options.fileName1 != "not specified", "Faile to parse required arg '-file1'");
+
+  options.equityName = get_basename(options.fileName1);
+  std::string insert = "tsp"+std::to_string(static_cast<unsigned>(options.trailingStopPercent))
+                     +"_sma"+std::to_string(options.smaPeriods);
+  options.outputFileName = get_output_filename(options.fileName1,insert);
+  options.logFileName = get_log_filename(options.fileName1,insert);
   return options;
+}
+
+std::ostream& operator<<(std::ostream& os, const ParsedOptions& opts)
+{
+  os << "filename1: " << opts.fileName1 << ", filename2: " << opts.fileName2 << std::endl;
+  os << "Using trailingStopPercent = "<<opts.trailingStopPercent<<std::endl;
+  os << "Using smaPeriods = "<<opts.smaPeriods<<std::endl;
+  os <<"Writing output to: '"<<opts.outputFileName<<"'"<<std::endl;
+  os <<"Writing log to: '"<<opts.logFileName<<"'"<<std::endl;
+  return os;
 }
 
 } // namespace bt
