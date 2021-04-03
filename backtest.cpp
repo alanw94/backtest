@@ -44,7 +44,8 @@ int main(int argc, char**argv)
   for(const bt::Position* pos : positions) {
     outFile<<pos->get_name()<<",";
   }
-  outFile<<"SMA"+std::to_string(opts.smaPeriods)<<std::endl;
+  outFile<<"SMA"+std::to_string(opts.smaPeriods)
+         <<",Deriv1,Deriv2"<<std::endl;
 
   float balance = 10000.0;
   const unsigned smaShares = static_cast<unsigned>(std::floor(balance/data1.closingPrices[1]));
@@ -82,7 +83,10 @@ int main(int argc, char**argv)
     }
 
     const float smaBalance = smaCash + smaShares*computedData1.sma[i];
-    outFile<<smaBalance<<std::endl;
+    outFile<<smaBalance
+           <<","<<computedData1.first_derivs[i]
+           <<","<<computedData1.second_derivs[i]
+           <<std::endl;
   }
 
   float numYears = (1.0*data1.closingPrices.size())/250;
