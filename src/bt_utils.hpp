@@ -42,8 +42,7 @@ float percent_less(float baselinePrice, float newPrice)
 }
 
 std::vector<float>
-get_intraday_price_sequence(float open, float low,
-                            float high, float close);
+get_intraday_price_sequence(unsigned i, const DataSet& data);
 
 std::string get_path(const std::string& filename);
 
@@ -58,6 +57,9 @@ std::string get_log_filename(const std::string& filename,
                              const std::string& insert);
 
 std::ostream& out(const std::string& filename="");
+
+void print_data(std::ostream& os, unsigned i,
+                const DataSet& data, float smaAtPreviousClose);
 
 } // namespace bt
 

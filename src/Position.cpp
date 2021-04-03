@@ -22,6 +22,67 @@ float force_into_range(float price, float lowLimit, float highLimit)
   return price;
 }
 
+void print_banner(std::ostream& os,
+                  const std::vector<Position*>& positions,
+                  const std::string& extraStuff)
+{
+  os << "Date,";
+  for(const Position* pos : positions) {
+    os<<pos->get_name()<<",";
+  }
+  os<<extraStuff<<std::endl;
+}
+
+void process_day(unsigned i, const DataSet& data,
+                 std::vector<Position*>& positions,
+                 float smaAtPreviousClose)
+{
+    for(bt::Position* pos : positions) {
+      pos->set_current_date(data.dates[i], smaAtPreviousClose);
+    }
+
+    std::vector<float> prices = bt::get_intraday_price_sequence(i, data);
+
+    for(float price : prices) {
+      for(bt::Position* position : positions) {
+        position->process_price(price);
+      }
+    }
+}
+
+void print_date_and_balances(std::ostream& os, unsigned i,
+                             const DataSet& data,
+                             const std::vector<Position*>& positions,
+                             const ComputedData& computedData,
+                             float smaCash, float smaShares)
+{
+    os<<data.dates[i]<<",";
+    for(const bt::Position* position : positions) {
+      os<<position->get_balance()<<",";
+    }
+
+    const float smaBalance = smaCash + smaShares*computedData.sma[i];
+    os<<smaBalance
+           <<","<<computedData.first_derivs[i]
+           <<","<<computedData.second_derivs[i]
+           <<std::endl;
+}
+
+void print_summary(std::ostream& os, float numYears,
+                   std::vector<Position*>& positions)
+{
+  for(const bt::Position* pos : positions) {
+    os << pos->get_name()<<": $"<<pos->get_balance()
+       << ", max drawdown: "
+       <<  pos->get_position_stats().get_max_drawdown_percent()
+       << "%"
+       << ", CAGR: "
+       << bt::CAGR_percent(10000.0, pos->get_balance(), numYears)
+       << "%"
+       << std::endl;
+  }
+}
+
 void Position::process_price(float price)
 {
   if (!is_invested() && (daysSinceSell >= 2)) {

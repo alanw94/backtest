@@ -21,7 +21,6 @@ std::string get_param(const std::string& argstr,
 struct ParsedOptions
 {
   std::string fileName1;
-  std::string fileName2;
   std::string equityName;
   std::string outputFileName;
   std::string logFileName;

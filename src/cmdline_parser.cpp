@@ -57,7 +57,6 @@ ParsedOptions parse_command_line(char** argv, int argc)
   std::string args = concatenate(argv, argc);
   ParsedOptions options;
   options.fileName1 = get_param(args, "-file1", "not specified");
-  options.fileName2 = get_param(args, "-file2", "not specified");
   options.trailingStopPercent = get_param(args, "-tsp", options.trailingStopPercent);
   options.smaPeriods = get_param(args, "-sma", options.smaPeriods);
 
@@ -73,7 +72,7 @@ ParsedOptions parse_command_line(char** argv, int argc)
 
 std::ostream& operator<<(std::ostream& os, const ParsedOptions& opts)
 {
-  os << "filename1: " << opts.fileName1 << ", filename2: " << opts.fileName2 << std::endl;
+  os << "filename1: " << opts.fileName1 << std::endl;
   os << "Using trailingStopPercent = "<<opts.trailingStopPercent<<std::endl;
   os << "Using smaPeriods = "<<opts.smaPeriods<<std::endl;
   os <<"Writing output to: '"<<opts.outputFileName<<"'"<<std::endl;

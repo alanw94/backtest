@@ -95,7 +95,6 @@ TEST(trade, cmdline_parsedOptions)
   bt::ParsedOptions opts = bt::parse_command_line(args.first, args.second);
   EXPECT_EQ("foo.csv",opts.fileName1);
   EXPECT_EQ("foo", opts.equityName);
-  EXPECT_EQ("bar.csv",opts.fileName2);
   EXPECT_EQ(4.0, opts.trailingStopPercent);
   EXPECT_EQ(5, opts.smaPeriods);
   EXPECT_EQ("foo_tsp4_sma5.csv", opts.outputFileName);

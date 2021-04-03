@@ -85,6 +85,23 @@ private:
   PositionStats positionStats;
 };
 
+void print_banner(std::ostream& os,
+                  const std::vector<Position*>& positions,
+                  const std::string& extraStuff);
+ 
+void process_day(unsigned i, const DataSet& data,
+                 std::vector<Position*>& positions,
+                 float smaAtPreviousClose);
+
+void print_date_and_balances(std::ostream& os, unsigned i,
+                             const DataSet& data,
+                             const std::vector<Position*>& positions,
+                             const ComputedData& computedData,
+                             float smaCash, float smaShares);
+
+void print_summary(std::ostream& os, float numYears,
+                   std::vector<Position*>& positions);
+
 class MyPosition : public Position
 {
 public:

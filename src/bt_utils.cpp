@@ -1,4 +1,5 @@
 #include <bt_utils.hpp>
+#include <bt_require.hpp>
 #include <vector>
 #include <string>
 #include <fstream>
@@ -6,15 +7,17 @@
 namespace bt {
 
 std::vector<float>
-get_intraday_price_sequence(float open, float low,
-                            float high, float close)
+get_intraday_price_sequence(unsigned i, const DataSet& data)
 {
+    bt_require(i < data.openingPrices.size(), "get_intraday_price_sequence i out of range");
+
+    const float open = data.openingPrices[i];
+    const float low = data.lowPrices[i];
+    const float high = data.highPrices[i];
+    const float close = data.closingPrices[i];
     const bool upDay = percent_less(close, open) > 0.1;
     std::vector<float> prices =
-             {open,
-              (upDay?low:high),
-              (upDay?high:low),
-              close};
+      {open, (upDay?low:high), (upDay?high:low), close};
     return prices;
 }
 
@@ -93,7 +96,20 @@ std::string get_log_filename(const std::string& filename,
 std::ostream& out(const std::string& filename)
 {
   static std::ofstream ofstr(filename);
+  bt_require(ofstr.is_open(), "bt::out file-stream not open.");
   return ofstr;
+}
+
+void print_data(std::ostream& os, unsigned i, const DataSet& data, float smaAtPreviousClose)
+{
+    os << "---------------------------------------\n"
+       << "i="<<i<<" "<<data.dates[i]
+       << ", o "<<data.openingPrices[i]
+       << ", l "<<data.lowPrices[i]
+       << ", h "<<data.highPrices[i]
+       << ", c "<<data.closingPrices[i]
+       << ", smaPrev "<<smaAtPreviousClose
+       << std::endl;
 }
 
 } // namespace bt
