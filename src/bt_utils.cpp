@@ -1,10 +1,17 @@
 #include <bt_utils.hpp>
 #include <bt_require.hpp>
+#include <read_stream.hpp>
 #include <vector>
 #include <string>
 #include <fstream>
 
 namespace bt {
+
+DataSet::DataSet(const std::string& fileName)
+: dates(), openingPrices(), highPrices(), lowPrices(), closingPrices()
+{
+  bt_require(read_data(fileName, *this), "Failed to read data from file "<<fileName);
+}
 
 std::vector<float>
 get_intraday_price_sequence(unsigned i, const DataSet& data)

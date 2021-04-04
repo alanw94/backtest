@@ -1,7 +1,9 @@
 #ifndef bt_analyze_prices_hpp
 #define bt_analyze_prices_hpp
 
-#include "read_stream.hpp"
+#include <bt_utils.hpp>
+#include <read_stream.hpp>
+#include <cmdline_parser.hpp>
 
 #include <vector>
 #include <map>
@@ -20,6 +22,7 @@ struct PriceSummary {
 };
 
 struct ComputedData {
+  ComputedData(const DataSet& data, const ParsedOptions& opts);
   std::vector<float> sma;
   std::vector<float> first_derivs;
   std::vector<float> second_derivs;

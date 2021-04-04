@@ -19,18 +19,15 @@ int main(int argc, char**argv)
     <<", tsp: "<<opts.trailingStopPercent
     <<", sma: "<<opts.smaPeriods<<std::endl;
 
-  bt::DataSet data1;
-  bt_require(bt::read_data(opts.fileName1, data1), "Failed to read data from "<<opts.fileName1);
-
-  bt::ComputedData computedData1;
-  bt::compute_data(data1, opts.smaPeriods, computedData1);
+  bt::DataSet data1(opts.fileName1);
+  bt::ComputedData computedData1(data1, opts);
 
   bt::MyPosition myPosition(opts.trailingStopPercent);
   bt::BuyAndHoldPosition bhPosition(opts.equityName);
   bt::SMAPosition smaPosition;
   bt::TSPPosition tspPosition(opts.trailingStopPercent);
 
-  std::vector<bt::Position*> positions =
+  std::vector<bt::PriceConsumer*> positions =
     {&myPosition, &tspPosition, &smaPosition, &bhPosition};
 
   bt::print_banner(outFile, positions,

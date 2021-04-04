@@ -8,6 +8,12 @@
 
 namespace bt {
 
+ComputedData::ComputedData(const DataSet& data, const ParsedOptions& opts)
+: sma(), first_derivs(), second_derivs()
+{
+  compute_data(data, opts.smaPeriods, *this);
+}
+
 PriceSummary get_price_summary(const std::vector<float>& prices)
 {
   PriceSummary summary = {prices.size(), max_price, min_price};

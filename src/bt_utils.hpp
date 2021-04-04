@@ -21,6 +21,7 @@ enum ColumnIndex : uint8_t {
 };
 
 struct DataSet {
+  DataSet(const std::string& fileName);
   std::vector<std::string> dates;
   std::vector<float> openingPrices;
   std::vector<float> highPrices;

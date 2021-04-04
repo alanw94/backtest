@@ -1,6 +1,7 @@
 #ifndef bt_Position_hpp
 #define bt_Position_hpp
 
+#include <PriceConsumer.hpp>
 #include <analyze_prices.hpp>
 #include <PositionStats.hpp>
 
@@ -19,18 +20,19 @@ struct ShouldSellResult {
 };
 
 
-class Position
+class Position : public PriceConsumer
 {
 public:
   Position(const std::string& nm,
            float bal = 10000.0,
            float buyPrc = 0.0,
            unsigned numShrs = 0)
-  : invested(false), balance(bal), buyPrice(buyPrc),
+  : PriceConsumer(nm),
+    invested(false), balance(bal), buyPrice(buyPrc),
     numShares(numShrs), previousPrice(0.0),
     numProfitableSales(0), numTotalSales(0),
     currentDate(""), smaPreviousClose(0.0),
-    m_isOpeningPrice(true),name(nm),
+    m_isOpeningPrice(true),
     daysSinceSell(2),
     positionStats()
   {}
@@ -38,7 +40,7 @@ public:
   virtual ~Position(){}
 
   virtual void set_current_date(const std::string& date,
-                                float smaAtPreviousClose)
+                                float smaAtPreviousClose) override
   {
     currentDate = date;
     smaPreviousClose = smaAtPreviousClose;
@@ -48,9 +50,11 @@ public:
     }
   }
 
-  void process_price(float price);
+  void process_daily_prices(float open, float low,
+                            float high, float close) override;
 
-  const std::string& get_name() const { return name; }
+  float get_value() const override { return get_balance(); }
+
   bool is_invested() const { return invested; }
   float get_balance() const;
   float get_buy_price() const { return buyPrice; }
@@ -62,6 +66,8 @@ public:
   { return positionStats; }
 
 private:
+  void process_price(float price);
+
   virtual ShouldBuyResult should_buy(float price, bool isOpeningPrice) = 0;
 
   virtual ShouldSellResult should_sell(float price, bool isOpeningPrice) = 0;
@@ -80,27 +86,26 @@ private:
   std::string currentDate;
   float smaPreviousClose = 0.0;
   bool m_isOpeningPrice = true;
-  std::string name;
   unsigned daysSinceSell = 2;
   PositionStats positionStats;
 };
 
 void print_banner(std::ostream& os,
-                  const std::vector<Position*>& positions,
+                  const std::vector<PriceConsumer*>& priceConsumers,
                   const std::string& extraStuff);
  
 void process_day(unsigned i, const DataSet& data,
-                 std::vector<Position*>& positions,
+                 std::vector<PriceConsumer*>& priceConsumers,
                  float smaAtPreviousClose);
 
 void print_date_and_balances(std::ostream& os, unsigned i,
                              const DataSet& data,
-                             const std::vector<Position*>& positions,
+                             const std::vector<PriceConsumer*>& priceConsumers,
                              const ComputedData& computedData,
                              float smaCash, float smaShares);
 
 void print_summary(std::ostream& os, float numYears,
-                   std::vector<Position*>& positions);
+                   std::vector<PriceConsumer*>& priceConsumers);
 
 class MyPosition : public Position
 {

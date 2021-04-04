@@ -23,42 +23,40 @@ float force_into_range(float price, float lowLimit, float highLimit)
 }
 
 void print_banner(std::ostream& os,
-                  const std::vector<Position*>& positions,
+                  const std::vector<PriceConsumer*>& priceConsumers,
                   const std::string& extraStuff)
 {
   os << "Date,";
-  for(const Position* pos : positions) {
-    os<<pos->get_name()<<",";
+  for(const PriceConsumer* pc : priceConsumers) {
+    os<<pc->get_name()<<",";
   }
   os<<extraStuff<<std::endl;
 }
 
 void process_day(unsigned i, const DataSet& data,
-                 std::vector<Position*>& positions,
+                 std::vector<PriceConsumer*>& priceConsumers,
                  float smaAtPreviousClose)
 {
-    for(bt::Position* pos : positions) {
-      pos->set_current_date(data.dates[i], smaAtPreviousClose);
+    for(bt::PriceConsumer* pc : priceConsumers) {
+      pc->set_current_date(data.dates[i], smaAtPreviousClose);
     }
 
     std::vector<float> prices = bt::get_intraday_price_sequence(i, data);
 
-    for(float price : prices) {
-      for(bt::Position* position : positions) {
-        position->process_price(price);
-      }
+    for(bt::PriceConsumer* priceConsumer : priceConsumers) {
+      priceConsumer->process_daily_prices(prices[0], prices[1], prices[2], prices[3]);
     }
 }
 
 void print_date_and_balances(std::ostream& os, unsigned i,
                              const DataSet& data,
-                             const std::vector<Position*>& positions,
+                             const std::vector<PriceConsumer*>& priceConsumers,
                              const ComputedData& computedData,
                              float smaCash, float smaShares)
 {
     os<<data.dates[i]<<",";
-    for(const bt::Position* position : positions) {
-      os<<position->get_balance()<<",";
+    for(const bt::PriceConsumer* priceConsumer : priceConsumers) {
+      os<<priceConsumer->get_value()<<",";
     }
 
     const float smaBalance = smaCash + smaShares*computedData.sma[i];
@@ -69,18 +67,33 @@ void print_date_and_balances(std::ostream& os, unsigned i,
 }
 
 void print_summary(std::ostream& os, float numYears,
-                   std::vector<Position*>& positions)
+                   std::vector<PriceConsumer*>& priceConsumers)
 {
-  for(const bt::Position* pos : positions) {
-    os << pos->get_name()<<": $"<<pos->get_balance()
-       << ", max drawdown: "
-       <<  pos->get_position_stats().get_max_drawdown_percent()
-       << "%"
-       << ", CAGR: "
-       << bt::CAGR_percent(10000.0, pos->get_balance(), numYears)
-       << "%"
-       << std::endl;
+  for(const bt::PriceConsumer* pc : priceConsumers) {
+    os << pc->get_name()<<": $"<<pc->get_value();
+    const bt::Position* pos = dynamic_cast<const bt::Position*>(pc);
+    if (pos != nullptr) {
+       os << ", max drawdown: "
+          <<  pos->get_position_stats().get_max_drawdown_percent()
+          << "%"
+          << ", CAGR: "
+          << bt::CAGR_percent(10000.0, pos->get_balance(), numYears)
+          << "%"
+          << std::endl;
+    }
+    else {
+      os << std::endl;
+    }
   }
+}
+
+void Position::process_daily_prices(float open, float low,
+                                    float high, float close)
+{
+  process_price(open);
+  process_price(open>close ? high : low);
+  process_price(open>close ? low : high);
+  process_price(close);
 }
 
 void Position::process_price(float price)
