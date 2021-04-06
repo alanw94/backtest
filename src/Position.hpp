@@ -101,8 +101,7 @@ void process_day(unsigned i, const DataSet& data,
 void print_date_and_balances(std::ostream& os, unsigned i,
                              const DataSet& data,
                              const std::vector<PriceConsumer*>& priceConsumers,
-                             const ComputedData& computedData,
-                             float smaCash, float smaShares);
+                             const ComputedData& computedData);
 
 void print_summary(std::ostream& os, float numYears,
                    std::vector<PriceConsumer*>& priceConsumers);

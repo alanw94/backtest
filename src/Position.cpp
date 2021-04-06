@@ -26,9 +26,9 @@ void print_banner(std::ostream& os,
                   const std::vector<PriceConsumer*>& priceConsumers,
                   const std::string& extraStuff)
 {
-  os << "Date,";
+  os << "Date";
   for(const PriceConsumer* pc : priceConsumers) {
-    os<<pc->get_name()<<",";
+    os<<","<<pc->get_name();
   }
   os<<extraStuff<<std::endl;
 }
@@ -51,19 +51,14 @@ void process_day(unsigned i, const DataSet& data,
 void print_date_and_balances(std::ostream& os, unsigned i,
                              const DataSet& data,
                              const std::vector<PriceConsumer*>& priceConsumers,
-                             const ComputedData& computedData,
-                             float smaCash, float smaShares)
+                             const ComputedData& computedData)
 {
-    os<<data.dates[i]<<",";
+    os<<data.dates[i];
     for(const bt::PriceConsumer* priceConsumer : priceConsumers) {
-      os<<priceConsumer->get_value()<<",";
+      os<<","<<priceConsumer->get_value();
     }
 
-    const float smaBalance = smaCash + smaShares*computedData.sma[i];
-    os<<smaBalance
-           <<","<<computedData.first_derivs[i]
-           <<","<<computedData.second_derivs[i]
-           <<std::endl;
+    os << ","<<computedData.second_derivs[i] <<std::endl;
 }
 
 void print_summary(std::ostream& os, float numYears,

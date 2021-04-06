@@ -1,6 +1,7 @@
 #include "analyze_prices.hpp"
 #include "bt_utils.hpp"
 #include "bt_require.hpp"
+#include "SMAComputer.hpp"
 
 #include <iostream>
 #include <cmath>
@@ -26,50 +27,10 @@ PriceSummary get_price_summary(const std::vector<float>& prices)
   return summary;
 }
 
-float sum(const std::vector<float>& prices, unsigned start, unsigned numVals)
-{
-  float result = 0.0;
-  for(unsigned i=start; i<start+numVals; ++i) {
-    result += prices[i];
-  }
-  return result;
-}
-
-class SmaComputer {
-public:
-  SmaComputer(unsigned numPeriods)
-  : m_data(numPeriods, 0.0),
-    m_curIdx(0),
-    m_startingUp(true)
-  {}
-
-  void add_value(float val)
-  {
-    m_data[m_curIdx++] = val;
-    if (m_curIdx >= m_data.size()) {
-      m_curIdx = 0;
-      if (m_startingUp) {
-        m_startingUp = false;
-      }
-    }
-  }
-
-  float get_average() const
-  {
-    unsigned num = m_startingUp ? m_curIdx : m_data.size();
-    return num > 0 ? sum(m_data, 0, num)/num : 0.0;
-  }
-
-private:
-  std::vector<float> m_data;
-  unsigned m_curIdx;
-  bool m_startingUp;
-};
-
 std::vector<float> compute_sma(const std::vector<float>& prices, unsigned numPeriods)
 {
   std::vector<float> sma;
-  SmaComputer smaComputer(numPeriods);
+  SMAComputer smaComputer(numPeriods);
 
   sma.reserve(prices.size());
 

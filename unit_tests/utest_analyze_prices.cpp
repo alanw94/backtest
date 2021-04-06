@@ -2,6 +2,8 @@
 
 #include <read_stream.hpp>
 #include <analyze_prices.hpp>
+#include <Deriv1Indicator.hpp>
+#include <SMAIndicator.hpp>
 #include <bt_require.hpp>
 #include "utest_utils.hpp"
 
@@ -30,26 +32,54 @@ TEST(analyze_prices, compute_simple_moving_average)
   const unsigned numSMAPeriods = 4;
   std::vector<float> expectedSma4
                             = {1.0, 2.0, 2.6667, 2.5, 2.5, 2.5};
-  std::vector<float> sma4 = bt::compute_sma(prices, numSMAPeriods);
+  bt::SMAIndicator smaIndicator("SMA", numSMAPeriods);
 
-  ASSERT_EQ(expectedSma4.size(), sma4.size());
   for(unsigned i=0; i<expectedSma4.size(); ++i) {
-    EXPECT_NEAR(expectedSma4[i], sma4[i], tol);
+    float open=0.0, low=0.0, high=0.0, close=prices[i];
+    smaIndicator.process_daily_prices(open, low, high, close);
+    EXPECT_NEAR(expectedSma4[i], smaIndicator.get_value(), tol);
   }
 }
 
-TEST(analyze_prices, compute_1st_derivative)
+TEST(analyze_prices, compute_1st_derivative_dx2)
 {
   std::vector<float> vals = {1.0, 3.0, 5.0, 2.0, 6.0};
   unsigned dxWidth = 2;
-  std::vector<float> derivs = bt::compute_first_derivative(vals, dxWidth);
+  std::vector<float> sma  = {1.0, 2.0, 4.0, 3.5, 4.0};
+  std::vector<float> derivs = bt::compute_first_derivative(sma, dxWidth);
+  bt::Deriv1Indicator deriv1Indicator("Deriv1", dxWidth);
   std::vector<float> expectedDerivs
-                          = {0.0, 2.0, 2.0, -0.5, 0.5};
+                          = {0.0, 1.0, 1.5, 0.75, 0.0};
 
   EXPECT_EQ(expectedDerivs.size(), derivs.size());
 
   for(unsigned i=0; i<derivs.size(); ++i) {
+    float open=vals[i], low=vals[i], high=vals[i], close=vals[i];
+    deriv1Indicator.process_daily_prices(open,low,high,close);
     EXPECT_NEAR(expectedDerivs[i], derivs[i], tol);
+    EXPECT_NEAR(expectedDerivs[i], deriv1Indicator.get_value(), tol)
+    <<"EN: i="<<i;
+  }
+}
+
+TEST(analyze_prices, compute_1st_derivative_dx3)
+{
+  std::vector<float> vals = {1.0, 3.0, 5.0, 7.0, 6.0, 5.0, 4.0, 3.0};
+  unsigned dxWidth = 3;
+  std::vector<float> sma  = {1.0, 2.0, 3.0, 5.0, 6.0, 6.0, 5.0, 4.0};
+  std::vector<float> derivs = bt::compute_first_derivative(sma, dxWidth);
+  bt::Deriv1Indicator deriv1Indicator("Deriv1", dxWidth);
+  std::vector<float> expectedDerivs
+                          = {0.0, 1.0, 1.0, 1.3333, 1.3333, 1.0, 0.0, -0.6667};
+
+  EXPECT_EQ(expectedDerivs.size(), derivs.size());
+
+  for(unsigned i=0; i<derivs.size(); ++i) {
+    float open=vals[i], low=vals[i], high=vals[i], close=vals[i];
+    deriv1Indicator.process_daily_prices(open,low,high,close);
+    EXPECT_NEAR(expectedDerivs[i], derivs[i], tol);
+    EXPECT_NEAR(expectedDerivs[i], deriv1Indicator.get_value(), tol)
+    <<"EN: i="<<i;
   }
 }
 
