@@ -1,5 +1,6 @@
 list(APPEND SOURCES
 	Deriv1Indicator.cpp
+	Deriv2Indicator.cpp
 	Position.cpp
 	analyze_prices.cpp
 	bt_utils.cpp

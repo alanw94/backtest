@@ -3,6 +3,7 @@
 #include <read_stream.hpp>
 #include <analyze_prices.hpp>
 #include <Deriv1Indicator.hpp>
+#include <Deriv2Indicator.hpp>
 #include <SMAIndicator.hpp>
 #include <bt_require.hpp>
 #include "utest_utils.hpp"
@@ -33,6 +34,21 @@ TEST(analyze_prices, compute_simple_moving_average)
   std::vector<float> expectedSma4
                             = {1.0, 2.0, 2.6667, 2.5, 2.5, 2.5};
   bt::SMAIndicator smaIndicator("SMA", numSMAPeriods);
+
+  for(unsigned i=0; i<expectedSma4.size(); ++i) {
+    float open=0.0, low=0.0, high=0.0, close=prices[i];
+    smaIndicator.process_daily_prices(open, low, high, close);
+    EXPECT_NEAR(expectedSma4[i], smaIndicator.get_value(), tol);
+  }
+}
+
+TEST(analyze_prices, compute_simple_moving_average_balance)
+{
+  std::vector<float> prices = {1.0, 3.0, 4.0, 2.0, 1.0, 3.0};
+  const unsigned numSMAPeriods = 4;
+  std::vector<float> expectedSma4
+                            = {1000.0, 2000.0, 2666.6667, 2500.0, 2500.0, 2500.0};
+  bt::SMAIndicator smaIndicator("SMA", numSMAPeriods, 1000.0);
 
   for(unsigned i=0; i<expectedSma4.size(); ++i) {
     float open=0.0, low=0.0, high=0.0, close=prices[i];
@@ -83,74 +99,36 @@ TEST(analyze_prices, compute_1st_derivative_dx3)
   }
 }
 
-TEST(analyze_prices, compute_2nd_derivative)
+TEST(analyze_prices, compute_2nd_derivative_dx3)
 {
-  std::vector<float> vals = {1.0, 3.0, 3.0, 2.0};
-  unsigned widthDx = 2;
-  std::vector<float> derivs = bt::compute_second_derivative(vals,widthDx);
+  std::vector<float> vals = {1.0, 3.0, 2.0, 2.0  , 3.0  , 4.0, 3.0};
+  unsigned widthDx = 3;
+  std::vector<float> sma  = {1.0, 2.0, 2.0, 2.333, 2.333, 3.0, 3.333};
   std::vector<float> expectedDerivs
-                          = {0.0, -1.0, -0.5, 0.0};
+                        = {0.0, 0.0, -1.0, 0.3333, -0.3333, 0.6667, -0.3333};
 
-  EXPECT_EQ(expectedDerivs.size(), derivs.size());
+  bt::Deriv2Indicator d2Indicator("Deriv2", widthDx);
 
-  for(unsigned i=0; i<derivs.size(); ++i) {
-    EXPECT_NEAR(expectedDerivs[i], derivs[i], tol);
+  for(unsigned i=0; i<expectedDerivs.size(); ++i) {
+    float open=vals[i], low=vals[i], high=vals[i], close=vals[i];
+    d2Indicator.process_daily_prices(open, low, high, close);
+    EXPECT_NEAR(expectedDerivs[i], d2Indicator.get_value(), tol);
   }
 }
 
-std::vector<float> fill_sin(unsigned N)
+TEST(analyze_prices, compute_2nd_derivative_dx4)
 {
-  std::vector<float> vals(N);
-  const float twoPI = 2*std::acos(-1.0);
-  bt_require(N>1, "fill_sin: N must be > 1.");
-  for(unsigned i=0; i<N; ++i)
-  {
-    vals[i] = std::sin((i*twoPI)/(N-1));
-  }
-  return vals;
-}
+  std::vector<float> vals = {1.0, 3.0, 2.0, 2.0, 3.0, 4.0, 3.0};
+  unsigned widthDx = 4;
+  std::vector<float> sma  = {1.0, 2.0, 2.0, 2.0, 2.5, 2.75, 3.0};
+  std::vector<float> expectedDerivs
+                        =  {0.0, 0.0, -1.0, -0.5, 0.5, 0.0, -0.125};
 
-unsigned find_min_abs_loc(const std::vector<float>& v)
-{
-  float minVal = std::numeric_limits<float>::max();
-  unsigned minLoc = std::numeric_limits<unsigned>::max();
-  //skip end points.
-  for(unsigned i=1; i<v.size()-1; ++i) {
-    if (std::abs(v[i]) < minVal) {
-      minVal = std::abs(v[i]);
-      minLoc = i;
-    }
-  }
-  return minLoc;
-}
+  bt::Deriv2Indicator d2Indicator("Deriv2", widthDx);
 
-unsigned find_max_abs_loc(const std::vector<float>& v)
-{
-  float maxVal = std::numeric_limits<float>::min();
-  unsigned maxLoc = std::numeric_limits<unsigned>::min();
-  for(unsigned i=0; i<v.size(); ++i) {
-    if (std::abs(v[i]) > maxVal) {
-      maxVal = std::abs(v[i]);
-      maxLoc = i;
-    }
-  }
-  return maxLoc;
-}
-
-TEST(analyze_prices, compute_2nd_derivative_sin)
-{
-  const unsigned N = 1000;
-  const float tolerance = 5.e-3;
-  std::vector<float> vals = fill_sin(N);
-  for(unsigned widthDx : {2, 4, 6, 8}) {
-    std::vector<float> derivs = bt::compute_second_derivative(vals, widthDx);
-    EXPECT_NEAR(0.0, derivs[0], 1.e-12);
-    ASSERT_FALSE(derivs.empty());
-    EXPECT_NEAR(0.0, derivs[derivs.size()-1], 1.e-12);
-
-    unsigned minLoc = find_min_abs_loc(derivs);
-    EXPECT_NEAR(0.0, vals[minLoc], tolerance)<<"widthDx="<<widthDx;
-    unsigned maxLoc = find_max_abs_loc(derivs);
-    EXPECT_NEAR(1.0, std::abs(vals[maxLoc]), tolerance)<<"widthDx="<<widthDx;
+  for(unsigned i=0; i<expectedDerivs.size(); ++i) {
+    float open=vals[i], low=vals[i], high=vals[i], close=vals[i];
+    d2Indicator.process_daily_prices(open, low, high, close);
+    EXPECT_NEAR(expectedDerivs[i], d2Indicator.get_value(), tol);
   }
 }

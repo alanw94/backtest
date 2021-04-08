@@ -1,6 +1,7 @@
 #ifndef bt_SMAComputer_hpp
 #define bt_SMAComputer_hpp
 
+#include <bt_require.hpp>
 #include <vector>
 
 namespace bt {
@@ -46,10 +47,21 @@ public:
     return m_data[oldestIdx];
   }
 
+  float get_value_at(unsigned age) const
+  {
+    bt_require(age<get_num_periods(), "age="<<age<<" too large, num_periods="<<get_num_periods());
+    int idx = m_curIdx - 1 - age;
+    if (idx < 0) {
+      idx += get_num_periods();
+    }
+    return m_data[idx];
+  }
+
   unsigned get_num_periods() const
   {
     return m_startingUp ? m_curIdx : m_data.size();
   }
+
 private:
   std::vector<float> m_data;
   unsigned m_curIdx;

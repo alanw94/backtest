@@ -23,14 +23,13 @@ float force_into_range(float price, float lowLimit, float highLimit)
 }
 
 void print_banner(std::ostream& os,
-                  const std::vector<PriceConsumer*>& priceConsumers,
-                  const std::string& extraStuff)
+                  const std::vector<PriceConsumer*>& priceConsumers)
 {
   os << "Date";
   for(const PriceConsumer* pc : priceConsumers) {
-    os<<","<<pc->get_name();
+    os << "," << pc->get_name();
   }
-  os<<extraStuff<<std::endl;
+  os << std::endl;
 }
 
 void process_day(unsigned i, const DataSet& data,
@@ -50,35 +49,20 @@ void process_day(unsigned i, const DataSet& data,
 
 void print_date_and_balances(std::ostream& os, unsigned i,
                              const DataSet& data,
-                             const std::vector<PriceConsumer*>& priceConsumers,
-                             const ComputedData& computedData)
+                             const std::vector<PriceConsumer*>& priceConsumers)
 {
     os<<data.dates[i];
     for(const bt::PriceConsumer* priceConsumer : priceConsumers) {
       os<<","<<priceConsumer->get_value();
     }
-
-    os << ","<<computedData.second_derivs[i] <<std::endl;
+    os << std::endl;
 }
 
-void print_summary(std::ostream& os, float numYears,
+void print_summary(std::ostream& os,
                    std::vector<PriceConsumer*>& priceConsumers)
 {
   for(const bt::PriceConsumer* pc : priceConsumers) {
-    os << pc->get_name()<<": $"<<pc->get_value();
-    const bt::Position* pos = dynamic_cast<const bt::Position*>(pc);
-    if (pos != nullptr) {
-       os << ", max drawdown: "
-          <<  pos->get_position_stats().get_max_drawdown_percent()
-          << "%"
-          << ", CAGR: "
-          << bt::CAGR_percent(10000.0, pos->get_balance(), numYears)
-          << "%"
-          << std::endl;
-    }
-    else {
-      os << std::endl;
-    }
+    pc->print_summary(os);
   }
 }
 
@@ -89,6 +73,19 @@ void Position::process_daily_prices(float open, float low,
   process_price(open>close ? high : low);
   process_price(open>close ? low : high);
   process_price(close);
+}
+
+void Position::print_summary(std::ostream& os) const
+{
+  float numYears = static_cast<float>(numDays)/250;
+  os << get_name() << ": $" << get_value()
+     << ", max drawdown: "
+     <<  this->get_position_stats().get_max_drawdown_percent()
+     << "%"
+     << ", CAGR: "
+     << bt::CAGR_percent(10000.0, this->get_balance(), numYears)
+     << "%"
+     << std::endl;
 }
 
 void Position::process_price(float price)

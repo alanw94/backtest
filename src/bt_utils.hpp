@@ -60,7 +60,7 @@ std::string get_log_filename(const std::string& filename,
 std::ostream& out(const std::string& filename="");
 
 void print_data(std::ostream& os, unsigned i,
-                const DataSet& data, float smaAtPreviousClose);
+                const DataSet& data);
 
 } // namespace bt
 

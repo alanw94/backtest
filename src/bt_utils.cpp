@@ -107,7 +107,7 @@ std::ostream& out(const std::string& filename)
   return ofstr;
 }
 
-void print_data(std::ostream& os, unsigned i, const DataSet& data, float smaAtPreviousClose)
+void print_data(std::ostream& os, unsigned i, const DataSet& data)
 {
     os << "---------------------------------------\n"
        << "i="<<i<<" "<<data.dates[i]
@@ -115,7 +115,6 @@ void print_data(std::ostream& os, unsigned i, const DataSet& data, float smaAtPr
        << ", l "<<data.lowPrices[i]
        << ", h "<<data.highPrices[i]
        << ", c "<<data.closingPrices[i]
-       << ", smaPrev "<<smaAtPreviousClose
        << std::endl;
 }
 

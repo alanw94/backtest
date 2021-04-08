@@ -45,6 +45,7 @@ public:
     currentDate = date;
     smaPreviousClose = smaAtPreviousClose;
     m_isOpeningPrice = true;
+    ++numDays;
     if (!is_invested()) {
       ++daysSinceSell;
     }
@@ -54,6 +55,8 @@ public:
                             float high, float close) override;
 
   float get_value() const override { return get_balance(); }
+
+  void print_summary(std::ostream& os) const;
 
   bool is_invested() const { return invested; }
   float get_balance() const;
@@ -76,6 +79,7 @@ private:
   void sell(float price);
 
   bool invested = false;
+  unsigned numDays = 0;
   float balance = 10000.0;
   float buyPrice = 0.0;
   unsigned numShares = 0;
@@ -91,8 +95,7 @@ private:
 };
 
 void print_banner(std::ostream& os,
-                  const std::vector<PriceConsumer*>& priceConsumers,
-                  const std::string& extraStuff);
+                  const std::vector<PriceConsumer*>& priceConsumers);
  
 void process_day(unsigned i, const DataSet& data,
                  std::vector<PriceConsumer*>& priceConsumers,
@@ -100,10 +103,9 @@ void process_day(unsigned i, const DataSet& data,
 
 void print_date_and_balances(std::ostream& os, unsigned i,
                              const DataSet& data,
-                             const std::vector<PriceConsumer*>& priceConsumers,
-                             const ComputedData& computedData);
+                             const std::vector<PriceConsumer*>& priceConsumers);
 
-void print_summary(std::ostream& os, float numYears,
+void print_summary(std::ostream& os,
                    std::vector<PriceConsumer*>& priceConsumers);
 
 class MyPosition : public Position

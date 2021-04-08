@@ -3,6 +3,7 @@
 
 #include <bt_utils.hpp>
 #include <cmath>
+#include <iostream>
 
 namespace bt {
 
@@ -25,6 +26,11 @@ public:
                                     float high, float close) = 0;
 
   virtual float get_value() const = 0;
+
+  virtual void print_summary(std::ostream& os) const
+  {
+    os << get_name() << ": Last Value: " << get_value() << std::endl;
+  }
 
 private:
   std::string m_name;
