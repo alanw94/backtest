@@ -4,6 +4,7 @@
 #include <PriceConsumer.hpp>
 #include <analyze_prices.hpp>
 #include <PositionStats.hpp>
+#include <SMAComputer.hpp>
 
 #include <iostream>
 
@@ -25,13 +26,14 @@ class Position : public PriceConsumer
 public:
   Position(const std::string& nm,
            float bal = 10000.0,
+           unsigned numSmaPeriods = 0,
            float buyPrc = 0.0,
            unsigned numShrs = 0)
   : PriceConsumer(nm),
     invested(false), balance(bal), buyPrice(buyPrc),
     numShares(numShrs), previousPrice(0.0),
     numProfitableSales(0), numTotalSales(0),
-    currentDate(""), smaPreviousClose(0.0),
+    currentDate(""), m_sma(numSmaPeriods),
     m_isOpeningPrice(true),
     daysSinceSell(2),
     positionStats()
@@ -39,11 +41,9 @@ public:
 
   virtual ~Position(){}
 
-  virtual void set_current_date(const std::string& date,
-                                float smaAtPreviousClose) override
+  virtual void set_current_date(const std::string& date) override
   {
     currentDate = date;
-    smaPreviousClose = smaAtPreviousClose;
     m_isOpeningPrice = true;
     ++numDays;
     if (!is_invested()) {
@@ -62,7 +62,7 @@ public:
   float get_balance() const;
   float get_buy_price() const { return buyPrice; }
   unsigned get_num_shares() const { return numShares; }
-  float get_sma_at_previous_close() const { return smaPreviousClose; }
+  float get_sma_at_previous_close() const { return m_sma.get_average(); }
   float get_previous_price() const { return previousPrice; }
 
   const PositionStats& get_position_stats() const
@@ -88,7 +88,7 @@ private:
   unsigned numTotalSales = 0;
 
   std::string currentDate;
-  float smaPreviousClose = 0.0;
+  SMAComputer m_sma;
   bool m_isOpeningPrice = true;
   unsigned daysSinceSell = 2;
   PositionStats positionStats;
@@ -98,8 +98,7 @@ void print_banner(std::ostream& os,
                   const std::vector<PriceConsumer*>& priceConsumers);
  
 void process_day(unsigned i, const DataSet& data,
-                 std::vector<PriceConsumer*>& priceConsumers,
-                 float smaAtPreviousClose);
+                 std::vector<PriceConsumer*>& priceConsumers);
 
 void print_date_and_balances(std::ostream& os, unsigned i,
                              const DataSet& data,
@@ -111,8 +110,8 @@ void print_summary(std::ostream& os,
 class MyPosition : public Position
 {
 public:
-  MyPosition(float trailingPercent)
-  : Position("MyPosition"),
+  MyPosition(float initialBalance, unsigned numSmaPeriods, float trailingPercent)
+  : Position("MyPosition", initialBalance, numSmaPeriods),
     trailingStopPercent(trailingPercent)
   {}
 
@@ -131,8 +130,8 @@ private:
 class BuyAndHoldPosition : public Position
 {
 public:
-  BuyAndHoldPosition(const std::string& equityName)
-  : Position(equityName)
+  BuyAndHoldPosition(const std::string& equityName, float initialBalance)
+  : Position(equityName, initialBalance)
   {}
 
   ~BuyAndHoldPosition(){}
@@ -161,7 +160,8 @@ private:
 class SMAPosition : public Position
 {
 public:
-  SMAPosition() : Position("SMASignal") {}
+  SMAPosition(float initialBalance, unsigned numSmaPeriods)
+   : Position("SMASignal", initialBalance, numSmaPeriods) {}
   virtual ~SMAPosition() {}
 
 private:
@@ -173,8 +173,8 @@ private:
 class TSPPosition : public Position
 {
 public:
-  TSPPosition(float trailPercentSell, float trailPercentBuy=-1.0)
-  : Position("TSPSignal"),
+  TSPPosition(float initialBalance, float trailPercentSell, float trailPercentBuy=-1.0)
+  : Position("TSPSignal", initialBalance),
     trailingStopPercentSell(trailPercentSell),
     trailingStopPercentBuy((trailPercentBuy<0.0 ? trailPercentSell : trailPercentBuy)),
     trailPrice(-1.0), movingPeak(-1.0)
@@ -202,4 +202,3 @@ std::ostream& operator<<(std::ostream& os, const Position& pos)
 
 } // namespace bt
 #endif
-

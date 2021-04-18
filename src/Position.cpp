@@ -33,11 +33,10 @@ void print_banner(std::ostream& os,
 }
 
 void process_day(unsigned i, const DataSet& data,
-                 std::vector<PriceConsumer*>& priceConsumers,
-                 float smaAtPreviousClose)
+                 std::vector<PriceConsumer*>& priceConsumers)
 {
     for(bt::PriceConsumer* pc : priceConsumers) {
-      pc->set_current_date(data.dates[i], smaAtPreviousClose);
+      pc->set_current_date(data.dates[i]);
     }
 
     std::vector<float> prices = bt::get_intraday_price_sequence(i, data);
@@ -73,6 +72,7 @@ void Position::process_daily_prices(float open, float low,
   process_price(open>close ? high : low);
   process_price(open>close ? low : high);
   process_price(close);
+  m_sma.add_value(close);
 }
 
 void Position::print_summary(std::ostream& os) const

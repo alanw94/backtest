@@ -18,8 +18,7 @@ public:
 
   const std::string& get_name() const { return m_name; }
 
-  virtual void set_current_date(const std::string& /*date*/,
-                                float /*smaAtPreviousClose*/)
+  virtual void set_current_date(const std::string& /*date*/)
   {}
 
   virtual void process_daily_prices(float open, float low,

@@ -25,8 +25,9 @@ int main(int argc, char**argv)
   bt::DataSet data(opts.fileName1);
   bt::ComputedData computedData1(data, opts);
 
-  bt::BuyAndHoldPosition bhPosition(opts.equityName);
-  bt::TSPPosition tspPosition(opts.trailingStopPercent);
+  const float balance = 10000.0;
+  bt::BuyAndHoldPosition bhPosition(opts.equityName, balance);
+  bt::TSPPosition tspPosition(balance, opts.trailingStopPercent);
   bt::Deriv1Indicator d1Indicator("Deriv1", opts.smaPeriods);
   bt::Deriv2Indicator d2Indicator("Deriv2", opts.smaPeriods);
   bt::SMAIndicator smaIndicator("SMA"+std::to_string(opts.smaPeriods),
@@ -38,9 +39,8 @@ int main(int argc, char**argv)
   bt::print_banner(outFile, positions);
 
   for(unsigned i=1; i<data.dates.size(); ++i) {
-    const float smaAtPreviousClose = computedData1.sma[i-1];
     bt::print_data(bt::out(), i, data);
-    bt::process_day(i, data, positions, smaAtPreviousClose);
+    bt::process_day(i, data, positions);
     bt::print_date_and_balances(outFile, i, data, positions);
   }
 
